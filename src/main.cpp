@@ -43,6 +43,9 @@ GLdouble k1 = 0.0;
 GLdouble k2 = 0.0;
 GLfloat shear_factor = 0.0;
 GLfloat s =0.0f;
+GLfloat k = 0.0;
+GLfloat xl = 0.0;
+GLfloat xr = 0.0;
 
 //GLfloat(*pM) [4] = M;
 
@@ -53,6 +56,11 @@ bool g_transform = false;
 //bool g_perspective = false; 
 bool g_perspective = true; 
 
+
+void movedistance(){
+    xl = 0.1 * k / 5.0f;
+    xr = 0.1 * k / 5.0f;
+}
 
 void displayMatrix(GLfloat (&m)[4*4]){
   std::cout<<endl;
@@ -78,7 +86,8 @@ void perspectiveGL( GLdouble fovY, GLdouble aspect, GLdouble zNear, GLdouble zFa
     fH = tan( fovY / 360 * pi ) * zNear;
     fW = fH * aspect;
     //std::cout<<fW<<endl;
-    glFrustum( -fW +k1 , fW + k2 , -fH, fH, zNear, zFar );
+    movedistance();
+    glFrustum( -fW + xl , fW + xr , -fH, fH, zNear, zFar );
 }
 
 // OpenGL functions
@@ -166,13 +175,14 @@ void keyPressed (unsigned char key, int x, int y) {
         break;
     case 'r':
       if(g_perspective){
-	g_eyex += 0.2;
+// 	g_eyex += 0.2;
 //  	k1 -= 0.0001;
 // 	k2 -= 0.0002;
 	//std::cout<<k<<endl;
 	//s -= 0.005;
 	//s *= 1.1;
 	//std::cout<<s<<endl;
+	k -= 0.01;
 	myReshape(g_viewport.w, g_viewport.h);
       }
       break;
@@ -284,8 +294,6 @@ void myDisplay() {
                 FOR (k, 4) {
                     int hh = h  + dy[k];
                     int ww = w  + dx[k];
-		    
-		   // std::cout<<hh<<" "<<ww<<endl;
 		    
                     float r = texture.at<Vec3b>(hh,ww)[2]/255.0f;
                     float g = texture.at<Vec3b>(hh,ww)[1]/255.0f;
