@@ -1,1 +1,0 @@
-/home/wnw/Downloads/FaceDemo/build/CMakeFiles/FaceDemo.dir
