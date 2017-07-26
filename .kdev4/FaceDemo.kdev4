@@ -2,7 +2,17 @@
 BuildItems=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x01\x00\x00\x00\x10\x00F\x00a\x00c\x00e\x00D\x00e\x00m\x00o)
 
 [CMake]
+Build Directory Count=1
+Current Build Directory Index=0
 ProjectRootRelative=./
+
+[CMake][CMake Build Directory 0]
+Build Directory Path=file:///home/wnw/Documents/multiFaceChange/build
+Build Type=Release
+CMake Binary=file:///usr/local/bin/cmake
+Environment Profile=
+Extra Arguments=
+Install Directory=file:///usr/local
 
 [Defines And Includes][Compiler]
 Name=GCC

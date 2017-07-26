@@ -46,6 +46,8 @@ GLfloat s =0.0f;
 GLfloat k = 0.0;
 GLfloat xl = 0.0;
 GLfloat xr = 0.0;
+int dx=0; 
+char ad[128]={0};
 
 //GLfloat(*pM) [4] = M;
 
@@ -56,6 +58,9 @@ bool g_transform = false;
 //bool g_perspective = false; 
 bool g_perspective = true; 
 
+void batchprocess(){
+   
+}
 
 void movedistance(){
     xl = 0.1 * k / 5.0f;
@@ -84,14 +89,13 @@ void perspectiveGL( GLdouble fovY, GLdouble aspect, GLdouble zNear, GLdouble zFa
     GLdouble fW, fH;
 
     fH = tan( fovY / 360 * pi ) * zNear;
-    fW = fH * aspect;
-    //std::cout<<fW<<endl;
+    fW = fH * aspect;//0.1
     movedistance();
     glFrustum( -fW + xl , fW + xr , -fH, fH, zNear, zFar );
 }
 
 // OpenGL functions
-void myReshape(int w, int h) { 
+void myReshape(int w, int h) {
     g_viewport.w = w;
     g_viewport.h = h;
 
@@ -178,11 +182,13 @@ void keyPressed (unsigned char key, int x, int y) {
 // 	g_eyex += 0.2;
 //  	k1 -= 0.0001;
 // 	k2 -= 0.0002;
-	//std::cout<<k<<endl;
-	//s -= 0.005;
-	//s *= 1.1;
-	//std::cout<<s<<endl;
-	k -= 0.01;
+	k -= 0.2;
+	myReshape(g_viewport.w, g_viewport.h);
+      }
+      break;
+    case 'l':
+      if(g_perspective){
+	k += 0.2;
 	myReshape(g_viewport.w, g_viewport.h);
       }
       break;
@@ -209,7 +215,7 @@ void arrowKeyPressed(int key, int x, int y) {
         break;
     case GLUT_KEY_LEFT:
         if (mod == GLUT_ACTIVE_SHIFT)
-            g_transX -= 0.01f;
+            g_transX -= 0.1f;
         else
             g_rotateX -= 5.0f;
         break;
@@ -245,15 +251,16 @@ void myDisplay() {
 //     glMultMatrixf(shearMatric);
     //std::cout<<shearMatric<<endl;
 
-    glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
+    glGetDoublev(GL_MODELVIEW_MATRIX, modelview);//获得当前矩阵
     //std::cout<<modelview<<endl;
-    Mat texture = g_demo->Texture();
+    Mat texture = g_demo->Texture(); //画出原图的面部特征
     if (texture.empty())
         return;
     Mat Z = g_demo->Depth();
-    int width = Z.cols;
-    int height = Z.rows;
-    float size = (float)max(width, height);
+    int width = Z.cols + 1;//174
+    int height = Z.rows;//224
+
+    float size = (float)max(width, height) ;//224.0
 //    float offset = (height-width)/float(2*height);
     Mat ar, H;
     Point2d t;
@@ -268,7 +275,6 @@ void myDisplay() {
         glTranslated(t.x/size, t.y/size, 0);  //translation
     }
 
-
     if (g_smooth)
         glShadeModel(GL_SMOOTH);
     else
@@ -279,7 +285,7 @@ void myDisplay() {
     else
         glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
-    // draw 3d face
+    // draw 3d face (opengl)
     int dx[] = {0, 0, 1, 1};
     int dy[] = {0, 1, 1, 0};
 
@@ -302,7 +308,6 @@ void myDisplay() {
                     float x = ww/size;
                     float y = (height-hh)/size; //(height-hh)/size;
                     float z = (float)Z.at<double>(hh,ww)/size;
-		    //std::cout<<x<<" "<<y<<" "<<z<<" "<<endl;
                     glVertex3f(x,y,z);
                 }
                 glEnd();
@@ -313,19 +318,24 @@ void myDisplay() {
     // get opencv image
     unsigned char* buffer = new unsigned char[(int)(size*size*3)];
     glReadPixels(0, 0, (int)size, (int)size, GL_RGB, GL_UNSIGNED_BYTE, buffer);
-    cv::Mat img((int)size, (int)size, CV_8UC3, buffer);
+    cv::Mat img((int)size , (int)size , CV_8UC3, buffer);
     cvtColor(img, img, CV_RGB2BGR);
     flip(img, img, 0);
     Mat face = Mat();
-    face = img(Rect(0, 0, width, height));
+    face = img(Rect(0, 0, (int)size, (int)size));
 
-    // 2d warp
-    invertAffineTransform(H, H);
-    Size imgSize = g_demo->ImageSize();
-    Mat warpImg = Mat::zeros(imgSize, CV_8UC3);
-    warpAffine(face, warpImg, H, imgSize);
-
-    imshow("Projected Face", warpImg);
+    // 2d warp not use
+//     invertAffineTransform(H, H);
+//     Size imgSize = g_demo->ImageSize();
+//     //Size bigimgsize = Size(1280,720);
+//     Mat warpImg = Mat::zeros(imgSize, CV_8UC3);
+//     Size bigH = Size(1024, 768);
+//     warpAffine(face, warpImg, H, imgSize);
+    
+    imshow("Projected Face", face);
+   
+//    sprintf(ad, "screen/test%d.jpg", ++dx);
+//    imwrite( ad, warpImg );
     waitKey(1);
     glPopMatrix();
     glutSwapBuffers();
@@ -377,8 +387,6 @@ int main(int argc, char *argv[]) {
 
     g_viewport.w = 224;
     g_viewport.h = 224;
-    //g_viewport.w = 348;
-    //g_viewport.h = 348;
     
     glutInitWindowSize(g_viewport.w, g_viewport.h);
     glutInitWindowPosition(0, 0);
