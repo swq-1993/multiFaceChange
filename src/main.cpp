@@ -13,7 +13,10 @@
 #include <opencv2/core/core.hpp>
 #include<opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
-
+#include<string.h>
+#include<iostream>
+# include <stdio.h>
+# include <stdlib.h>
 class Viewport {
 public:
     int w; // width
@@ -48,6 +51,8 @@ GLfloat xl = 0.0;
 GLfloat xr = 0.0;
 int dx=0; 
 char ad[128]={0};
+int movenum = 50;
+int i = 1;
 
 //GLfloat(*pM) [4] = M;
 
@@ -56,10 +61,28 @@ bool g_smooth = true;
 bool g_filled = true; 
 bool g_transform = false;
 //bool g_perspective = false; 
-bool g_perspective = true; 
-
+bool g_perspective = true;
+void myReshape(int w, int h);
+void myDisplay();
 void batchprocess(){
-   
+   //1、视景体移动;2、把目标移到窗口;3、save 2D image; 4、循环50次
+  std::cout<<"开始移动"<<endl;
+//   for(int i = 0;i<num; i++){
+//     std::cout<<"移动第"<<i<<"次"<<endl;
+//     k -= 0.05;
+//     myReshape(g_viewport.w, g_viewport.h);
+//   }
+  
+  while(movenum){
+    std::cout<<"移动第"<<i<<"次"<<endl;
+    k -= 0.1;
+    myReshape(g_viewport.w, g_viewport.h);
+    g_transX -= 0.095f;
+    myDisplay();
+    i++;
+    movenum--;
+    
+  }
 }
 
 void movedistance(){
@@ -182,13 +205,13 @@ void keyPressed (unsigned char key, int x, int y) {
 // 	g_eyex += 0.2;
 //  	k1 -= 0.0001;
 // 	k2 -= 0.0002;
-	k -= 0.2;
+	k -= 0.1;
 	myReshape(g_viewport.w, g_viewport.h);
       }
       break;
     case 'l':
       if(g_perspective){
-	k += 0.2;
+	k += 0.1;
 	myReshape(g_viewport.w, g_viewport.h);
       }
       break;
@@ -238,6 +261,9 @@ void myDisplay() {
 			  0.0f,0.0f,1.0f,0.0f,
 			  0.0f,0.0f,0.0f,1.0f}; 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+    
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
@@ -332,10 +358,22 @@ void myDisplay() {
 //     Size bigH = Size(1024, 768);
 //     warpAffine(face, warpImg, H, imgSize);
     
-    imshow("Projected Face", face);
-   
-//    sprintf(ad, "screen/test%d.jpg", ++dx);
-//    imwrite( ad, warpImg );
+      imshow("Projected Face", face);
+//       imwrite("screen/test.jpg", face);
+
+    
+//       string imgfilename("img");
+//       char filenameNum[4];
+//       int j = i;
+//       if(j%2 != 0){j++;j=j/2;}
+//       else j = j/2;
+//       sprintf(filenameNum, "%d", j);
+//       imgfilename += filenameNum;
+//       imgfilename += ".jpg"; 
+//       std::cout<<imgfilename<<endl;
+//       std::cout<<"存入第"<<j<<"张图"<<endl;
+//       imwrite(imgfilename, face);
+//       
     waitKey(1);
     glPopMatrix();
     glutSwapBuffers();
@@ -398,6 +436,7 @@ int main(int argc, char *argv[]) {
     glutDisplayFunc(myDisplay);
     glutReshapeFunc(myReshape);
     glutIdleFunc(myFrameMove);
+//     batchprocess();
     glutMainLoop();
     return 0;
 }
