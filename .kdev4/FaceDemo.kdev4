@@ -19,5 +19,34 @@ Name=GCC
 Path=gcc
 Type=GCC
 
+[Launch]
+Launch Configurations=Launch Configuration 0
+
+[Launch][Launch Configuration 0]
+Configured Launch Modes=execute
+Configured Launchers=nativeAppLauncher
+Name=New Compiled Binary Launcher
+Type=Native Application
+
+[Launch][Launch Configuration 0][Data]
+Arguments=image ./data/bush.jpg
+Debugger Shell=
+Dependencies=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x00)
+Dependency Action=Nothing
+Display Demangle Names=true
+Display Static Members=false
+EnvironmentGroup=
+Executable=file:///home/wnw/Documents/multiFaceChange/build/FaceDemo
+External Terminal=konsole --noclose --workdir %workdir -e %exe
+GDB Path=
+Project Target=FaceDemo,<wrong-target>
+Remote GDB Config Script=
+Remote GDB Run Script=
+Remote GDB Shell Script=
+Start With=ApplicationOutput
+Use External Terminal=false
+Working Directory=file:///home/wnw/Documents/multiFaceChange/build
+isExecutable=true
+
 [Project]
 VersionControlSupport=kdevgit

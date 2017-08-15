@@ -53,8 +53,7 @@ int dx=0;
 char ad[128]={0};
 int movenum = 50;
 int i = 1;
-
-//GLfloat(*pM) [4] = M;
+int whilenum = -1000;
 
 // rendering flag
 bool g_smooth = true; 
@@ -64,20 +63,84 @@ bool g_transform = false;
 bool g_perspective = true;
 void myReshape(int w, int h);
 void myDisplay();
+
+void PrintMatrix( float matrix[16] )  
+{  
+    assert( matrix != 0 );  
+    printf( "%8.2f%8.2f%8.2f%8.2f\n"  
+            "%8.2f%8.2f%8.2f%8.2f\n"  
+            "%8.2f%8.2f%8.2f%8.2f\n"  
+            "%8.2f%8.2f%8.2f%8.2f\n",  
+            matrix[0], matrix[1], matrix[2], matrix[3],  
+            matrix[4], matrix[5], matrix[6], matrix[7],  
+            matrix[8], matrix[9], matrix[10], matrix[11],  
+            matrix[12], matrix[13], matrix[14], matrix[15] );  
+}  
+
+void MyRotatef( float matrix[16],  
+                float angleInDegree,  
+                float x,  
+                float y,  
+                float z )  
+{  
+    assert( matrix != 0 );  
+  
+    // 向量的单位化  
+    float length = sqrt( x * x + y * y + z * z );  
+    assert( !qFuzzyCompare( length, 0.0f ) );// 希望length不为0  
+  
+    x /= length;  
+    y /= length;  
+    z /= length;  
+  
+    float alpha = angleInDegree / 180 * 3.1415926;// 已转换弧度制  
+    float s = sin( alpha );  
+    float c = cos( alpha );  
+    float t = 1.0f - c;  
+  
+#define MATRIX( row, col ) matrix[row * 4 + col]  
+    MATRIX( 0, 0 ) = t * x * x + c;  
+    MATRIX( 0, 1 ) = t * x * y + s * z;  
+    MATRIX( 0, 2 ) = t * x * z - s * y;  
+    MATRIX( 0, 3 ) = 0.0f;  
+    MATRIX( 1, 0 ) = t * x * y - s * z;  
+    MATRIX( 1, 1 ) = t * y * y + c;  
+    MATRIX( 1, 2 ) = t * y * z + s * x;  
+    MATRIX( 1, 3 ) = 0.0f;  
+    MATRIX( 2, 0 ) = t * x * z + s * y;  
+    MATRIX( 2, 1 ) = t * y * z - s * x;  
+    MATRIX( 2, 2 ) = t * z * z + c;  
+    MATRIX( 2, 3 ) = 0.0f;  
+    MATRIX( 3, 0 ) = 0.0f;  
+    MATRIX( 3, 1 ) = 0.0f;  
+    MATRIX( 3, 2 ) = 0.0f;  
+    MATRIX( 3, 3 ) = 1.0f;  
+#undef MATRIX  
+}  
+  
+
 void batchprocess(){
    //1、视景体移动;2、把目标移到窗口;3、save 2D image; 4、循环50次
   std::cout<<"开始移动"<<endl;
+  g_transX += 0.1f;
 //   for(int i = 0;i<num; i++){
 //     std::cout<<"移动第"<<i<<"次"<<endl;
 //     k -= 0.05;
 //     myReshape(g_viewport.w, g_viewport.h);
 //   }
   
+  /*
+	g_transX	k
+left 	-0.088f		-0.09
+right 	+0.0958f	+0.1
+   
+   */
+  
   while(movenum){
     std::cout<<"移动第"<<i<<"次"<<endl;
-    k -= 0.1;
+    k -= 0.09;
     myReshape(g_viewport.w, g_viewport.h);
-    g_transX -= 0.095f;
+    g_transX -= 0.088f;
     myDisplay();
     i++;
     movenum--;
@@ -134,7 +197,7 @@ void myReshape(int w, int h) {
     if (g_perspective) {
         //gluPerspective(fovy, aspect, near_z, far_z);  
 	perspectiveGL(fovy, aspect, near_z, far_z);
-        //gluLookAt(0.5,0.5,g_eye, 0.5,0.5,0, 0,1,0);
+//         gluLookAt(0.0,0.5,-5.0, 0.5,0.5,0, 0,1,0);
 	gluLookAt(g_eyex,0.5 ,g_eye, 0.5,0.5,0, 0,1,0);
     } else {
         glOrtho(0, 1, 0, 1, near_z, far_z);   
@@ -148,6 +211,8 @@ void initScene(){
 
     glEnable( GL_DEPTH_TEST );
     glDepthFunc( GL_LEQUAL );
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+    
     myReshape(g_viewport.w,g_viewport.h);
 }
 
@@ -202,9 +267,6 @@ void keyPressed (unsigned char key, int x, int y) {
         break;
     case 'r':
       if(g_perspective){
-// 	g_eyex += 0.2;
-//  	k1 -= 0.0001;
-// 	k2 -= 0.0002;
 	k -= 0.1;
 	myReshape(g_viewport.w, g_viewport.h);
       }
@@ -240,13 +302,13 @@ void arrowKeyPressed(int key, int x, int y) {
         if (mod == GLUT_ACTIVE_SHIFT)
             g_transX -= 0.1f;
         else
-            g_rotateX -= 5.0f;
+	  g_rotateX -= 5.0f;
         break;
     case GLUT_KEY_RIGHT:
         if (mod == GLUT_ACTIVE_SHIFT)
             g_transX += 0.01f;
         else
-            g_rotateX += 5.0f;
+             g_rotateX += 5.0f;
         break;
     default:
         break;
@@ -256,34 +318,41 @@ void arrowKeyPressed(int key, int x, int y) {
 
 //display functions
 void myDisplay() {
+  float matrix1[16], matrix2[16];
   GLfloat shearMatric[16] = {1.0f,0.0,0.0f,0.0f,
 			  s,1.0f,0.0f,0.0f,
 			  0.0f,0.0f,1.0f,0.0f,
 			  0.0f,0.0f,0.0f,1.0f}; 
+
+//    GLfloat rotateMatric[16] = { cos(rotatex / 180 * 3.1415926),0.0f,sin(rotatex / 180 * 3.1415926),0.0f,
+// 				0.0f, 1.0f,0.0f,0.0f,
+// 				-sin(rotatex / 180 * 3.1415926),0.0f,cos(rotatex / 180 * 3.1415926),0.0f,
+// 				0.0f,0.0f,0.0f,1.0f};
+			  glClearDepth(1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
+//     glDepthFunc(GL_LEQUAL);
+    glDepthFunc(GL_LESS);
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
     
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-
-    glPushMatrix();
-    
+    glPushMatrix();    
     glTranslatef(g_transX, g_transY, 0.0f);
     glRotatef(g_rotateY, 1.0f, 0.0f, 0.0f);
     glRotatef(g_rotateX, 0.0f, 1.0f, 0.0f);
     glScalef(g_scale, g_scale, g_scale);
-//     glLoadMatrixf(shearMatric);
-//     glMultMatrixf(shearMatric);
-    //std::cout<<shearMatric<<endl;
-
-    glGetDoublev(GL_MODELVIEW_MATRIX, modelview);//获得当前矩阵
-    //std::cout<<modelview<<endl;
+//       PrintMatrix(rotateMatric);
+//     glLoadMatrixf(rotateMatric);
+//     glMultMatrixf(rotateMatric);
+  
+    glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
     Mat texture = g_demo->Texture(); //画出原图的面部特征
+  
     if (texture.empty())
         return;
     Mat Z = g_demo->Depth();
-    int width = Z.cols + 1;//174
+    int width = Z.cols ;//174
     int height = Z.rows;//224
 
     float size = (float)max(width, height) ;//224.0
@@ -323,9 +392,11 @@ void myDisplay() {
 
             if (flag) {
                 glBegin(GL_QUADS);
+		 
                 FOR (k, 4) {
                     int hh = h  + dy[k];
-                    int ww = w  + dx[k];
+//                     int ww = (width - w)  + dx[k];
+		    int ww = w + dx[k];
 		    
                     float r = texture.at<Vec3b>(hh,ww)[2]/255.0f;
                     float g = texture.at<Vec3b>(hh,ww)[1]/255.0f;
@@ -334,7 +405,12 @@ void myDisplay() {
                     float x = ww/size;
                     float y = (height-hh)/size; //(height-hh)/size;
                     float z = (float)Z.at<double>(hh,ww)/size;
+//  		    while(whilenum>0){
+// 		      std::cout<<x<<","<<y<<","<<z<<endl;
+// 		      whilenum = -1000;
+//  		    }
                     glVertex3f(x,y,z);
+// 		    whilenum++;
                 }
                 glEnd();
             }
@@ -362,18 +438,30 @@ void myDisplay() {
 //       imwrite("screen/test.jpg", face);
 
     
-//       string imgfilename("img");
-//       char filenameNum[4];
-//       int j = i;
-//       if(j%2 != 0){j++;j=j/2;}
-//       else j = j/2;
-//       sprintf(filenameNum, "%d", j);
-//       imgfilename += filenameNum;
-//       imgfilename += ".jpg"; 
-//       std::cout<<imgfilename<<endl;
-//       std::cout<<"存入第"<<j<<"张图"<<endl;
-//       imwrite(imgfilename, face);
-//       
+       string imgfilename("img");
+       char filenameNum[4];
+//        int j = i;
+//        if(j%2 != 0){j++;j=j/2;}
+//        else j = j/2;
+//        j = 27 - j;
+//        sprintf(filenameNum, "%d", j);
+//        imgfilename += filenameNum;
+//        imgfilename += ".jpg"; 
+//        std::cout<<imgfilename<<endl;
+//        std::cout<<"存入第"<<j<<"张图"<<endl;
+//        imwrite(imgfilename, face);
+       
+       int j = i;
+       if (j%2 !=0 ){j++;j=j/2;}
+       else j = j / 2;
+       j = j + 25;
+       sprintf(filenameNum, "%d", j);
+       imgfilename += filenameNum;
+       imgfilename += ".jpg";
+       std::cout<<imgfilename<<endl;
+       std::cout<<"存入第"<<j<<"张图"<<endl;
+       imwrite(imgfilename, face);
+       
     waitKey(1);
     glPopMatrix();
     glutSwapBuffers();
@@ -436,7 +524,7 @@ int main(int argc, char *argv[]) {
     glutDisplayFunc(myDisplay);
     glutReshapeFunc(myReshape);
     glutIdleFunc(myFrameMove);
-//     batchprocess();
+     batchprocess();
     glutMainLoop();
     return 0;
 }

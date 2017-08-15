@@ -157,7 +157,7 @@ void CWarpUtils::EstimateHWeighted(const PointSetd a, const PointSetd b, const v
 }
 
 Mat CWarpUtils::EstimateHWeighted( PointSetd _pnt1, PointSetd _pnt2, bool _flag ) {
-	double m[6]={0};
+	double m[6]={0}; 
 	CvMat M = cvMat( 2, 3, CV_64F, m);
 	vectord weights(66, 1);
 
